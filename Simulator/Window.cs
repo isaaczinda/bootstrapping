@@ -18,6 +18,7 @@ public class Window : Gtk.Window
 		this.Name = "MainWindow";
 		this.Title = global::Mono.Unix.Catalog.GetString("test");
 		this.WindowPosition = ((global::Gtk.WindowPosition)(4));
+		this.Resizable = true;
 		// Container child MainWindow.Gtk.Container+ContainerChild
 		// Container child vpaned1.Gtk.Paned+PanedChild
 		this.da = new global::Gtk.DrawingArea();

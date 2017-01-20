@@ -86,8 +86,6 @@ namespace Engine
 		// create new toggle input functionality
 		public void ToggleClockState()
 		{
-			Console.WriteLine("toggle clock state");
-
 			// toggle whether or not the clock is on
 			Running = !Running;
 
