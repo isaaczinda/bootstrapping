@@ -1,0 +1,3 @@
+﻿ - fix empty mouse move events
+ - fix 'double press' event issue
+ - fix empty mouse release event issue
