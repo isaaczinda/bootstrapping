@@ -33,11 +33,11 @@ namespace Engine
 
 		// specific parameters for drawing
 		public const int PADDING = 10;
-		public const int REFERENCE_WIDTH = 50;
-		public const int REFERENCE_HEIGHT = 30;
+		public const int REFERENCE_WIDTH = 30;
+		public const int REFERENCE_HEIGHT = 20;
 
-		public const int BUTTON_WIDTH = 50;
-		public const int BUTTON_HEIGHT = 15;
+		public const int BUTTON_WIDTH = 30;
+		public const int BUTTON_HEIGHT = 10;
 
 		public const float FONT_SIZE = 16;
 

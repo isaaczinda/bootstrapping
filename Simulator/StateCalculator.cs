@@ -12,6 +12,8 @@ namespace Engine
 
 		public ComponentCollection addDependentGate(Component encapsulatingComponent)
 		{
+			// whenever we create a copy of the ComponentCollection, create a new dictionary
+
 			// add a new dictionary to keep track of gate values
 			memory.Add(encapsulatingComponent, new Dictionary<Component, ComponentState[]>());
 
@@ -57,13 +59,13 @@ namespace Engine
 		}
 	
 		// pass null if we are working with the MASTER component
-		public ComponentState[] ResolveOutputs(Dictionary<Component, ComponentState[]> outputStatesArgument, ComponentState[] inputs)
+		public ComponentState[] ResolveOutputs(Dictionary<Component, ComponentState[]> memoryArgument, ComponentState[] inputs)
 		{
 			Dictionary<Component, int> targetNumberInputs = new Dictionary<Component, int>();
 			Dictionary<Component, int> actualNumberInputs = new Dictionary<Component, int>();
 
 			Dictionary<Component, ComponentState[]> inputStates = new Dictionary<Component, ComponentState[]>();
-			Dictionary<Component, ComponentState[]> outputStates = outputStatesArgument;
+			Dictionary<Component, ComponentState[]> outputStates = memoryArgument;
 
 			// gates that have been fully resolved and whose children need to be defined
 			Queue<Component> toResolveQueue = new Queue<Component>();
@@ -133,6 +135,7 @@ namespace Engine
 							{
 								Gate childGate = (Gate)childComponent;
 
+								// THIS IS THE PROBLEM
 								ComponentState[] resolvedOutputStates = childGate.Function(inputStates[childComponent]);
 								outputStates[childComponent] = resolvedOutputStates;
 

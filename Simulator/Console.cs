@@ -32,31 +32,38 @@ namespace Engine
 			ConsoleThread.Join();
 		}
 
-		private static void addComponent(string componentName)
+		private static void addComponent(string componentName, int number)
 		{
 			ComponentCollection activeCollection = CollectionManager.GetActiveCollection();
 
-			switch (componentName)
+			for (int i = 0; i < number; i++)
 			{
-				case "input":
-					new Engine.Input(activeCollection, new Coord(100, 100));
-					break;
-				case "output":
-					new Output(activeCollection, new Coord(100, 100));
-					break;
-				case "clock":
-					new Clock(activeCollection, new Coord(100, 100));
-					break;
-				default:
-					if (CollectionManager.GetCollectionNames().Contains(componentName))
-					{
-						new CustomGate(activeCollection, componentName, new Coord(100, 100));
-					}
-					else
-					{
-						Console.WriteLine("invalid gate name.");
-					}
-					break;
+				Coord coordinate = new Coord(100 + i * 10, 100) - activeCollection.GetPosition();
+
+				switch (componentName)
+				{
+					case "input":
+						new Engine.Input(activeCollection, coordinate);
+						break;
+					case "output":
+						new Output(activeCollection, coordinate);
+						break;
+					case "clock":
+						new Clock(activeCollection, coordinate);
+						break;
+					default:
+						List<string> test = CollectionManager.GetCollectionNames();
+
+						if (CollectionManager.GetCollectionNames().Contains(componentName))
+						{
+							new CustomGate(activeCollection, componentName, coordinate);
+						}
+						else
+						{
+							Console.WriteLine("invalid gate name.");
+						}
+						break;
+				}
 			}
 		}
 
@@ -91,11 +98,10 @@ namespace Engine
 			if (commands[0] == "ls")
 			{
 				listActiveCollections();
-				return;
-			}
 
+			}
 			// make sure a command was acutally issued
-			if (commands.Length >= 2)
+			else if (commands.Length >= 2)
 			{
 				switch (commands[0])
 				{
@@ -106,16 +112,31 @@ namespace Engine
 						changeActiveCollection(commands[1]);
 						break;
 					case "add":
-						addComponent(commands[1]);
+						int numberToAdd = 1;
+						if (commands.Length == 3)
+						{
+							try
+							{
+								numberToAdd = Convert.ToInt16(commands[2]);
+							}
+							catch
+							{
+								Console.WriteLine("invalid number of components");
+								break;
+							}
+						}
+
+						addComponent(commands[1], numberToAdd);
 						break;
 				}
 			}
+
+			// write the repel symbol again
+			Console.Write("--> ");
 		}
 
 		private static void AcceptCommand()
 		{
-			Console.Write("--> ");
-
 			// there is no sender
 			CommandEntered(null, Console.ReadLine());
 		}

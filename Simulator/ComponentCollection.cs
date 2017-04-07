@@ -111,7 +111,7 @@ namespace Engine
 
 		[JsonProperty]
 		private String Name;
-
+		 
 		[JsonProperty]
 		private Coord Position;
 
