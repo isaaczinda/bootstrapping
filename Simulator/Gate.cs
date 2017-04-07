@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 
 namespace Engine
@@ -13,11 +14,13 @@ namespace Engine
 			calculateBoundingBoxes();
 		}
 
-		public Gate(ComponentCollection MemberOf, int NumberInputs, int NumberOutputs, Coord Position, String Name) : base(MemberOf, Position, ComponentType.Gate, Name)
+		public Gate(Blueprint MemberOf, int NumberInputs, int NumberOutputs, Coord Position, String Name) : base(MemberOf, Position, ComponentType.Gate, Name)
 		{
 			base.setupComponent(NumberInputs, NumberOutputs);
 			base.resetOutputs();
 			calculateBoundingBoxes();
+
+            this.Id = MemberOf.Add(this);
 		}
 
 		//set the positions of input and output boxes based on how many inputs and outputs we have
@@ -51,6 +54,6 @@ namespace Engine
 		}
 
 		// all inheritences must override this
-		public abstract ComponentState[] Function(ComponentState[] Inputs);
+		public abstract ComponentState[] Function(ComponentState[] Inputs, Dictionary<List<Component>, ComponentState[]> Memory, List<Component> MasterChain);
 	}
 }

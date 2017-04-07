@@ -20,7 +20,7 @@ namespace Engine
 		[JsonProperty]
         protected ComponentType Type;
 
-		protected ComponentCollection Parent;
+		protected Blueprint Parent;
 
 		[JsonProperty]
 		protected ComponentState[] OutputStates;
@@ -57,13 +57,13 @@ namespace Engine
 			return Component.BaseComponentNames.Contains(this.getName());
 		}
 
-        public Component(ComponentCollection MemberOf, Coord Position, ComponentType Type, String ComponentName) {
+        public Component(Blueprint MemberOf, Coord Position, ComponentType Type, String ComponentName) {
 			// add to component collection, set Id accordingly
 			this.Position = Position;
             this.Type = Type;
 			this.Name = ComponentName;
 			this.Parent = MemberOf;
-            this.Id = MemberOf.Add(this);
+            //this.Id = MemberOf.Add(this);
         }
 
 		public void Move(Coord amountToMove)

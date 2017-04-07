@@ -38,11 +38,11 @@ public class Window : Gtk.Window
 		Storage.LoadProject();
 
 		// this is the collection that we will always see first
-		CollectionManager.SetActiveCollection("main");
+		BlueprintLibrary.SetActiveCollection("main");
 
 		// sets up entire event framework
 		eventManager = new EventManager(da, this);
-		CollectionManager.SetEventManager(eventManager);
+		BlueprintLibrary.SetEventManager(eventManager);
 
 		// tell the program that the circut has changed
 		UserInterface.CircutChanged();
@@ -57,7 +57,7 @@ public class Window : Gtk.Window
 	private void createNAndGate()
 	{
 		// create nand default gate gates
-		ComponentCollection nand = CollectionManager.CreateComponentCollection("nand");
+		Blueprint nand = BlueprintLibrary.CreateComponentCollection("nand");
 		Engine.Input inputOne = new Engine.Input(nand, new Coord(0, 0));
 		Engine.Input inputTwo = new Engine.Input(nand, new Coord(0, 0));
 		And andGate = new And(nand, new Coord(0, 0));

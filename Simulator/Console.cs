@@ -34,7 +34,7 @@ namespace Engine
 
 		private static void addComponent(string componentName, int number)
 		{
-			ComponentCollection activeCollection = CollectionManager.GetActiveCollection();
+			Blueprint activeCollection = BlueprintLibrary.GetActiveCollection();
 
 			for (int i = 0; i < number; i++)
 			{
@@ -52,9 +52,9 @@ namespace Engine
 						new Clock(activeCollection, coordinate);
 						break;
 					default:
-						List<string> test = CollectionManager.GetCollectionNames();
+						List<string> test = BlueprintLibrary.GetCollectionNames();
 
-						if (CollectionManager.GetCollectionNames().Contains(componentName))
+						if (BlueprintLibrary.GetCollectionNames().Contains(componentName))
 						{
 							new CustomGate(activeCollection, componentName, coordinate);
 						}
@@ -69,20 +69,27 @@ namespace Engine
 
 		private static void changeActiveCollection(string newCollection)
 		{
-			if (CollectionManager.ComponentExists(newCollection))
+			
+			if (BlueprintLibrary.ComponentExists(newCollection))
 			{
+				// change the active collection
 				UserInterface.SetCurrentState(ProgramState.None);
-				CollectionManager.SetActiveCollection(newCollection);
+				BlueprintLibrary.SetActiveCollection(newCollection);
+
+				// resolve the new active collection
+				BlueprintLibrary.GetActiveCollection().ResolveOutputs();
 			}
 			else
 			{
 				Console.WriteLine("collection does not exist.");
 			}
+
+
 		}
 
 		private static void listActiveCollections()
 		{
-			List<String> collectionNames = CollectionManager.GetCollectionNames();
+			List<String> collectionNames = BlueprintLibrary.GetCollectionNames();
 			foreach (String name in collectionNames)
 			{
 				Console.Write(name);
@@ -106,7 +113,7 @@ namespace Engine
 				switch (commands[0])
 				{
 					case "mk":
-						CollectionManager.CreateComponentCollection(commands[1]);
+						BlueprintLibrary.CreateComponentCollection(commands[1]);
 						break;
 					case "cd":
 						changeActiveCollection(commands[1]);

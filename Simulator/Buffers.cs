@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Newtonsoft.Json;
@@ -10,14 +10,14 @@ namespace Engine
 	{
 		[JsonProperty]
 		private List<Buffer> Items = new List<Buffer>();
-		private ComponentCollection Parent;
+		private Blueprint Parent;
 
-		public BufferCollection(ComponentCollection Parent)
+		public BufferCollection(Blueprint Parent)
 		{
 			this.Parent = Parent;
 		}
 
-		public ComponentCollection GetParent()
+		public Blueprint GetParent()
 		{
 			return this.Parent;
 		}

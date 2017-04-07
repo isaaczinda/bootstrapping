@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Gtk;
 
 
@@ -28,7 +28,7 @@ namespace Engine
 
 		public static Component GetSavedComponent()
 		{
-			return CollectionManager.GetActiveCollection().getComponentById(UserInterface.SavedComponentReference.getId());
+			return BlueprintLibrary.GetActiveCollection().getComponentById(UserInterface.SavedComponentReference.getId());
 		}
 
 		public static ComponentReference GetSavedComponentReference()
@@ -105,7 +105,7 @@ namespace Engine
 					UserInterface.ClickLocation = mousePosition;
 					break;
 				case ProgramState.Panning:
-					ComponentCollection activeCollection = CollectionManager.GetActiveCollection();
+					Blueprint activeCollection = BlueprintLibrary.GetActiveCollection();
 
 					activeCollection.Move(UserInterface.mousePosition - UserInterface.ClickLocation);
 
@@ -132,7 +132,7 @@ namespace Engine
 
 		private static void deleteCurrentReference()
 		{
-			ComponentCollection collection = CollectionManager.GetActiveCollection();
+			Blueprint collection = BlueprintLibrary.GetActiveCollection();
 
 			switch (UserInterface.CurrentState)
 			{
@@ -151,7 +151,7 @@ namespace Engine
 					break;
 				case ProgramState.SelectedGate:
 					Component toDelete = collection.getComponentById(UserInterface.SavedComponentReference.getId());
-					CollectionManager.GetActiveCollection().Delete(toDelete);
+					BlueprintLibrary.GetActiveCollection().Delete(toDelete);
 					UserInterface.CurrentState = ProgramState.None;
 					UserInterface.CircutChanged();
 					break;
@@ -176,10 +176,8 @@ namespace Engine
 		{
 			DateTime start = DateTime.Now;
 
-			ComponentState[] collectionInputs = CollectionManager.GetActiveCollection().getInputStates();
-
 			// resolve outputs using the current input states
-			CollectionManager.GetActiveCollection().ResolveMasterOutputs(collectionInputs);
+			BlueprintLibrary.GetActiveCollection().ResolveOutputs();
 
 			DateTime end = DateTime.Now;
 
@@ -188,7 +186,7 @@ namespace Engine
 
 		private static void leftClick()
 		{
-			ComponentCollection collection = CollectionManager.GetActiveCollection();
+			Blueprint collection = BlueprintLibrary.GetActiveCollection();
 
 			// logic to check button box clicks
 			foreach (Component component in collection.getItems())
@@ -249,7 +247,7 @@ namespace Engine
 								return;
 							case ProgramState.ReferencingFromInput:
 								// get the component that was previously clicked
-								Component StoredComponent = CollectionManager.GetActiveCollection().getComponentById(UserInterface.SavedComponentReference.getId());
+								Component StoredComponent = BlueprintLibrary.GetActiveCollection().getComponentById(UserInterface.SavedComponentReference.getId());
 
 								// add reference from current spot to output
 								if (StoredComponent.getType() == ComponentType.Output || StoredComponent.getType() == ComponentType.Gate)
@@ -365,7 +363,7 @@ namespace Engine
 
 		private static void rightClick()
 		{
-			ComponentCollection collection = CollectionManager.GetActiveCollection();
+			Blueprint collection = BlueprintLibrary.GetActiveCollection();
 
 			// logic to move any component
 			foreach (Component component in collection.getItems())

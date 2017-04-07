@@ -54,6 +54,8 @@ namespace Engine
 
 		private static void drawComponent(Component component)
 		{
+			Blueprint main = BlueprintLibrary.GetActiveCollection();
+
 			//draw background
 			Coord upperLeft = component.getPosition();
 			Coord lowerRight = new Coord(component.getPosition().x + component.getDimensions().x, component.getPosition().y + component.getDimensions().y);
@@ -114,7 +116,7 @@ namespace Engine
 				}
 				else
 				{
-					color = Drawing.ColorFromState(component.getOutputs()[0]);
+					color = Drawing.ColorFromState(main.GetComponentOutputs(component)[0]);
 				}
 
 				Drawing.drawSquare(color, button);
@@ -125,7 +127,7 @@ namespace Engine
 		{
 			Drawing.context = context;
 
-			ComponentCollection main = CollectionManager.GetActiveCollection();
+			Blueprint main = BlueprintLibrary.GetActiveCollection();
 
 			// DRAW BUFFERS
 			foreach (Buffer buffer in main.Buffers.GetItems())
@@ -161,7 +163,8 @@ namespace Engine
 				if (buffer.GetGroupComponentReference() != null)
 				{
 					Component temp = main.getComponentById(buffer.GetGroupComponentReference().getId());
-					bufferState = main.GetMasterState(temp, buffer.GetGroupComponentReference().getIndex());
+					// THIS MAY BE WRONG
+					bufferState = main.GetComponentOutputs(temp)[buffer.GetGroupComponentReference().getIndex()];
 				}
 				Cairo.Color referenceColor = Drawing.ColorFromState(bufferState);
 
@@ -178,7 +181,7 @@ namespace Engine
 				if (buffer.GetComponentReference() != null)
 				{
 					ComponentReference componentReference = buffer.GetComponentReference();
-					Component component = CollectionManager.GetActiveCollection().getComponentById(componentReference.getId());
+					Component component = BlueprintLibrary.GetActiveCollection().getComponentById(componentReference.getId());
 
 					Coord target = component.getOutputBoundingBoxes()[componentReference.getIndex()].GetCenter() + component.getPosition();
 					Coord source = buffer.getBoundingBox().GetCenter();
@@ -214,7 +217,7 @@ namespace Engine
 								if (buffer.GetGroupComponentReference() != null)
 								{
 									Component temp = main.getComponentById(buffer.GetGroupComponentReference().getId());
-									componentReferenceState = main.GetMasterState(temp, buffer.GetGroupComponentReference().getIndex());
+									componentReferenceState = main.GetComponentOutputs(temp)[buffer.GetGroupComponentReference().getIndex()];
 								}
 							}
 							else
@@ -222,9 +225,8 @@ namespace Engine
 								Component targetComponent = main.getComponentById(reference.getId());
 								target = targetComponent.getOutputBoundingBoxes()[reference.getIndex()].UpperLeft + targetComponent.getPosition() + new Coord(Component.REFERENCE_WIDTH / 2f, Component.REFERENCE_HEIGHT / 2f);
 
-								componentReferenceState = main.GetMasterState(targetComponent, reference.getIndex());
+								componentReferenceState = main.GetComponentOutputs(targetComponent)[reference.getIndex()];
 							}
-
 
 							Drawing.drawLine(target, source, Drawing.ColorFromState(componentReferenceState));
 						}

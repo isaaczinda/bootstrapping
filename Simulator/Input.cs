@@ -5,7 +5,7 @@ namespace Engine
 {
 	public class Input : Component
 	{
-		public Input(ComponentCollection MemberOf, Coord Position, Coord Dimensions, int Id, string Name, ComponentState[] OutputStates, ComponentReference[] InputStates)
+		public Input(Blueprint MemberOf, Coord Position, Coord Dimensions, int Id, string Name, ComponentState[] OutputStates, ComponentReference[] InputStates)
 		{
 			this.Position = Position;
 			this.Dimensions = Dimensions;
@@ -19,11 +19,13 @@ namespace Engine
 			this.calculateBoundingBoxes();
 		}
 
-		public Input(ComponentCollection MemberOf, Coord Position) : base(MemberOf, Position, ComponentType.Input, "input")
+		public Input(Blueprint MemberOf, Coord Position) : base(MemberOf, Position, ComponentType.Input, "input")
 		{
 			base.setupComponent(0, 1);
 			this.setOutputs(new ComponentState[] { ComponentState.False });
 			calculateBoundingBoxes();
+
+            this.Id = MemberOf.Add(this);
 		}
 
 		public void Toggle()
@@ -62,13 +64,6 @@ namespace Engine
 			// set dimensions of entire gate
 			this.Dimensions = new Coord(width, height);
 		}
-
-		public Input(ComponentCollection MemberOf, ComponentState[] Outputs, int Id) : base(ComponentType.Input)
-		{
-			this.OutputStates = Outputs;
-			MemberOf.Add(this);
-			base.Id = Id;
-		}
 	}
 
 	public class Clock : Input
@@ -103,14 +98,14 @@ namespace Engine
 			}
 		}
 
-		public Clock(ComponentCollection MemberOf, Coord Position, Coord Dimensions, int Id, string Name, ComponentState[] OutputStates, ComponentReference[] InputStates)
+		public Clock(Blueprint MemberOf, Coord Position, Coord Dimensions, int Id, string Name, ComponentState[] OutputStates, ComponentReference[] InputStates)
 			: base(MemberOf, Position, Dimensions, Id, Name, OutputStates, InputStates)
 
 		{
 			this.SetupClock();
 		}
 
-		public Clock(ComponentCollection MemberOf, Coord Position) : base(MemberOf, Position)
+		public Clock(Blueprint MemberOf, Coord Position) : base(MemberOf, Position)
 		{
 			this.SetupClock();
 		}
@@ -134,7 +129,7 @@ namespace Engine
 			timer.Elapsed += (o, ea) =>
 			{
 				// add a new clock toggle event
-				CollectionManager.Events.Add(new Event(this, Event.Type.ClockToggle));
+				BlueprintLibrary.Events.Add(new Event(this, Event.Type.ClockToggle));
 			};
 		}
 	}

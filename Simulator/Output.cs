@@ -1,10 +1,10 @@
-﻿using System;
+using System;
 namespace Engine
 {
 	public class Output : Component
 	{
 		// used to load components from memory
-		public Output(ComponentCollection MemberOf, Coord Position, Coord Dimensions, int Id, string Name, ComponentState[] OutputStates, ComponentReference[] InputStates)
+		public Output(Blueprint MemberOf, Coord Position, Coord Dimensions, int Id, string Name, ComponentState[] OutputStates, ComponentReference[] InputStates)
 		{
 			this.Position = Position;
 			this.Dimensions = Dimensions;
@@ -18,11 +18,13 @@ namespace Engine
 			this.calculateBoundingBoxes();
 		}
 
-		public Output(ComponentCollection MemberOf, Coord Position) : base(MemberOf, Position, ComponentType.Output, "output")
+		public Output(Blueprint MemberOf, Coord Position) : base(MemberOf, Position, ComponentType.Output, "output")
 		{
 			base.setupComponent(1, 1);
 			base.resetOutputs();
 			calculateBoundingBoxes();
+
+            this.Id = MemberOf.Add(this);
 		}
 
 		protected void calculateBoundingBoxes()
@@ -49,7 +51,7 @@ namespace Engine
 		}
 
 		// each output may have only one reference
-		public Output(ComponentCollection MemberOf, ComponentReference Reference, int Id) : base(ComponentType.Output)
+		public Output(Blueprint MemberOf, ComponentReference Reference, int Id) : base(ComponentType.Output)
 		{
 			this.InputStates = new ComponentReference[] { Reference };
 			MemberOf.Add(this);

@@ -5,16 +5,16 @@ namespace Engine
 {
     public class CustomGate : Gate
     {
-        private ComponentCollection RootCollection;
+		private Blueprint Master;
 
-		public CustomGate(ComponentCollection MemberOf, string GateName, Coord Position)
-			: base(MemberOf, CollectionManager.Lookup(GateName).getNumberInputs(), CollectionManager.Lookup(GateName).getNumberOutputs(), Position, GateName)
+		public CustomGate(Blueprint MemberOf, string GateName, Coord Position)
+			: base(MemberOf, BlueprintLibrary.Lookup(GateName).getNumberInputs(), BlueprintLibrary.Lookup(GateName).getNumberOutputs(), Position, GateName)
 		{
 			this.Initialize();
 		}
 
 		// only used for serialization
-		public CustomGate(ComponentCollection MemberOf, Coord Position, Coord Dimensions, int Id, string GateName, ComponentState[] OutputStates, ComponentReference[] InputStates)
+		public CustomGate(Blueprint MemberOf, Coord Position, Coord Dimensions, int Id, string GateName, ComponentState[] OutputStates, ComponentReference[] InputStates)
 			: base(OutputStates, InputStates)
 		{
 			this.Position = Position;
@@ -32,11 +32,12 @@ namespace Engine
 		private void Initialize()
 		{
 			// lookup gate name, save it as field
-			this.RootCollection = CollectionManager.Lookup(this.Name).addDependentGate(this);
-			this.RootCollection.Changed += RootCollectionChanged;
+			this.Master = BlueprintLibrary.Lookup(this.Name);
+			this.Master.Changed += MasterChanged;
+           	this.Master.AddCopy(this);
 		}
 
-		private void RootCollectionChanged(object sender, EventArgs e)
+		private void MasterChanged(object sender, EventArgs e)
 		{
 			// remove all references to this gate's outputs
 			for (int index = 0; index < this.getNumberOutputs(); index++)
@@ -45,31 +46,31 @@ namespace Engine
 			}
 
 			// clear all input and output states
-			this.OutputStates = new ComponentState[RootCollection.getNumberInputs()];
-			this.InputStates = new ComponentReference[RootCollection.getNumberOutputs()];
+			this.OutputStates = new ComponentState[Master.getNumberInputs()];
+			this.InputStates = new ComponentReference[Master.getNumberOutputs()];
 
 
 			// recalculate the bounding boxes
 			this.calculateBoundingBoxes();
 		}
 
-        public override ComponentState[] Function(ComponentState[] Inputs) {
+		public override ComponentState[] Function(ComponentState[] Inputs, Dictionary<List<Component>, ComponentState[]> Memory, List<Component> MasterChain) {
             // each input can only have one state, so we can compare like this
-            if (Inputs.Length != RootCollection.getNumberInputs()) {
+            if (Inputs.Length != Master.getNumberInputs()) {
                 throw new Exception("An incorrect number of inputs were passed");
             }
 
-            // resolve function outputs
-			return RootCollection.ResolveOutputs(this, Inputs);
+			// resolve function outputs
+			return Master.ResolveOutputs(Memory, Inputs, MasterChain);
         }
     }
 
     public class And : Gate
     {
-		public And(ComponentCollection MemberOf, Coord Position) : base(MemberOf, 2, 1, Position, "b_and") {
+		public And(Blueprint MemberOf, Coord Position) : base(MemberOf, 2, 1, Position, "b_and") {
         }
 
-        public override ComponentState[] Function(ComponentState[] Inputs) {
+		public override ComponentState[] Function(ComponentState[] Inputs, Dictionary<List<Component>, ComponentState[]> Memory, List<Component> MasterChain) {
 			// if both values are true, we can guarentee a true return
 			if (Inputs[0] == ComponentState.True && Inputs[1] == ComponentState.True)
 			{
@@ -90,10 +91,10 @@ namespace Engine
 
     public class Not : Gate
     {
-		public Not(ComponentCollection MemberOf, Coord Position) : base(MemberOf, 1, 1, Position, "b_not") {
+		public Not(Blueprint MemberOf, Coord Position) : base(MemberOf, 1, 1, Position, "b_not") {
         }
 
-        public override ComponentState[] Function(ComponentState[] Inputs) {
+		public override ComponentState[] Function(ComponentState[] Inputs, Dictionary<List<Component>, ComponentState[]> Memory, List<Component> MasterChain) {
             if (Inputs[0] == ComponentState.True) {
                 return new ComponentState[] {ComponentState.False};
             } else if (Inputs[0] == ComponentState.False){

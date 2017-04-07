@@ -25,7 +25,7 @@ namespace Engine
 			}
 
 			// if any existing collection has the gate name
-			if (CollectionManager.GetCollections().Select((arg) => arg.GetName()).Contains(gateName))
+			if (BlueprintLibrary.GetCollections().Select((arg) => arg.GetName()).Contains(gateName))
 			{
 				return false;
 			}
@@ -48,7 +48,7 @@ namespace Engine
 
 		public static void SaveProject()
 		{
-			foreach (ComponentCollection collection in CollectionManager.GetCollections())
+			foreach (Blueprint collection in BlueprintLibrary.GetCollections())
 			{
 				if (collection.GetName() != "nand")
 				{
@@ -60,7 +60,7 @@ namespace Engine
 			SaveDependencyTree();
 		}
 
-		private static void SaveComponent (ComponentCollection Collection) {
+		private static void SaveComponent (Blueprint Collection) {
 			createStorageDirectory();
 
             // get where the file should be stored given its name
@@ -172,7 +172,7 @@ namespace Engine
 			Dictionary<string, List<string>> GlobalDependencies = new Dictionary<string, List<string>>();
 
 			// loop through each collection
-			foreach (ComponentCollection collection in CollectionManager.GetCollections())
+			foreach (Blueprint collection in BlueprintLibrary.GetCollections())
 			{
 				// do not save the nand collection
 				if (collection.GetName() != "nand")
@@ -201,7 +201,7 @@ namespace Engine
 
 
 			// create a component collection that we will save to
-			ComponentCollection collection = new ComponentCollection(collectionName);
+			Blueprint collection = new Blueprint(collectionName);
 			collection.setPosition(collectionPosition);
 
 			// extract items and converts to List<ComponentCollection>
@@ -248,7 +248,7 @@ namespace Engine
 				collection.Buffers.New(position, id, references);
 			}
 
-			CollectionManager.AddExistingCollection(collection);
+			BlueprintLibrary.AddExistingCollection(collection);
 		}
     }
 }
