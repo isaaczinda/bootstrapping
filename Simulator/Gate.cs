@@ -6,34 +6,23 @@ namespace Engine
 {
     public abstract class Gate : Component
 	{
-		public Gate(ComponentState[] OutputStates, ComponentReference[] InputStates)
+		public Gate(Coord Position, String Name)
+			: base(Position, ComponentType.Gate, Name)
 		{
-			this.Type = ComponentType.Gate;
-			this.OutputStates = OutputStates;
-			this.InputStates = InputStates;
-			calculateBoundingBoxes();
-		}
-
-		public Gate(Blueprint MemberOf, int NumberInputs, int NumberOutputs, Coord Position, String Name) : base(MemberOf, Position, ComponentType.Gate, Name)
-		{
-			base.setupComponent(NumberInputs, NumberOutputs);
-			base.resetOutputs();
-			calculateBoundingBoxes();
-
-            this.Id = MemberOf.Add(this);
+			
 		}
 
 		//set the positions of input and output boxes based on how many inputs and outputs we have
 		protected void calculateBoundingBoxes()
 		{
-			int referencesToFit = Math.Max(this.InputStates.Length, this.OutputStates.Length);
+			int referencesToFit = Math.Max(this.getNumberInputs(), this.OutputStates.Length);
 			int width = referencesToFit * REFERENCE_WIDTH + (referencesToFit + 1) * PADDING;
 			int height = PADDING * 3 + REFERENCE_HEIGHT * 2;
 
 			// clear the bounding boxes
 			this.clearBoundingBoxes();
 
-			for (int inputNumber = 0; inputNumber < this.InputStates.Length; inputNumber++)
+			for (int inputNumber = 0; inputNumber < this.getNumberInputs(); inputNumber++)
 			{
 				Coord upperLeftCorner = new Coord((inputNumber * REFERENCE_WIDTH) + (inputNumber + 1) * (PADDING), PADDING);
 				Coord lowerRightCorner = new Coord(upperLeftCorner.x + REFERENCE_WIDTH, upperLeftCorner.y + REFERENCE_HEIGHT);

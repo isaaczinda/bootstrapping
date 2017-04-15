@@ -28,7 +28,7 @@ namespace Engine
 
 		public static Component GetSavedComponent()
 		{
-			return BlueprintLibrary.GetActiveCollection().getComponentById(UserInterface.SavedComponentReference.getId());
+			return BlueprintLibrary.GetActiveCollection().GetComponentById(UserInterface.SavedComponentReference.getId());
 		}
 
 		public static ComponentReference GetSavedComponentReference()
@@ -138,19 +138,19 @@ namespace Engine
 			{
 				case ProgramState.ReferencingFromInput:
 					// lookup the component that was references
-					Component StoredComponent = collection.getComponentById(UserInterface.SavedComponentReference.getId());
+					Component StoredComponent = collection.GetComponentById(UserInterface.SavedComponentReference.getId());
 					// set then input to the component that was referenced
-					StoredComponent.setInput(null, UserInterface.SavedComponentReference.getIndex());
+					StoredComponent.SetInput(null, UserInterface.SavedComponentReference.getIndex());
 					UserInterface.CurrentState = ProgramState.None;
 					UserInterface.CircutChanged();
 					break;
 				case ProgramState.ReferencingFromOutput:
-					Component component = collection.getComponentById(SavedComponentReference.getId());
+					Component component = collection.GetComponentById(SavedComponentReference.getId());
 					component.removeReferencesToOutput(SavedComponentReference.getIndex());
 					UserInterface.CircutChanged();
 					break;
 				case ProgramState.SelectedGate:
-					Component toDelete = collection.getComponentById(UserInterface.SavedComponentReference.getId());
+					Component toDelete = collection.GetComponentById(UserInterface.SavedComponentReference.getId());
 					BlueprintLibrary.GetActiveCollection().Delete(toDelete);
 					UserInterface.CurrentState = ProgramState.None;
 					UserInterface.CircutChanged();
@@ -174,14 +174,7 @@ namespace Engine
 
 		public static void CircutChanged()
 		{
-			DateTime start = DateTime.Now;
-
-			// resolve outputs using the current input states
 			BlueprintLibrary.GetActiveCollection().ResolveOutputs();
-
-			DateTime end = DateTime.Now;
-
-			Console.WriteLine("spent:" + (end - start).TotalMilliseconds);
 		}
 
 		private static void leftClick()
@@ -189,7 +182,7 @@ namespace Engine
 			Blueprint collection = BlueprintLibrary.GetActiveCollection();
 
 			// logic to check button box clicks
-			foreach (Component component in collection.getItems())
+			foreach (Component component in collection.GetComponentList())
 			{
 				if (component.getButtonBox() != null && component.getType() == ComponentType.Input)
 				{
@@ -221,7 +214,7 @@ namespace Engine
 								return;
 							case ProgramState.ReferencingFromOutput: 
 							case ProgramState.SelectedBuffer:
-								component.setInput(UserInterface.SavedComponentReference, i);
+								component.SetInput(UserInterface.SavedComponentReference, i);
 								UserInterface.CircutChanged();
 								UserInterface.CurrentState = ProgramState.None;
 								return;
@@ -247,12 +240,12 @@ namespace Engine
 								return;
 							case ProgramState.ReferencingFromInput:
 								// get the component that was previously clicked
-								Component StoredComponent = BlueprintLibrary.GetActiveCollection().getComponentById(UserInterface.SavedComponentReference.getId());
+								Component StoredComponent = BlueprintLibrary.GetActiveCollection().GetComponentById(UserInterface.SavedComponentReference.getId());
 
 								// add reference from current spot to output
 								if (StoredComponent.getType() == ComponentType.Output || StoredComponent.getType() == ComponentType.Gate)
 								{
-									StoredComponent.setInput(new ComponentReference(component, i), UserInterface.SavedComponentReference.getIndex());
+									StoredComponent.SetInput(new ComponentReference(component, i), UserInterface.SavedComponentReference.getIndex());
 									UserInterface.CircutChanged();
 								}
 								else
@@ -287,7 +280,7 @@ namespace Engine
 			}
 
 			// checks to see if we are clicking on the gate
-			foreach (Component component in collection.getItems())
+			foreach (Component component in collection.GetComponentList())
 			{
 				if (mousePosition.isInside(new BoundingBox(component.getPosition(), component.getPosition() + component.getDimensions())))
 				{
@@ -334,9 +327,9 @@ namespace Engine
 			if (UserInterface.GetCurrentState() == ProgramState.ReferencingFromInput)
 			{
 				Buffer temp = collection.Buffers.New(mousePosition - collection.GetPosition());
-				Component component = collection.getComponentById(UserInterface.SavedComponentReference.getId());
+				Component component = collection.GetComponentById(UserInterface.SavedComponentReference.getId());
 
-				component.setInput(new ComponentReference(temp), UserInterface.SavedComponentReference.getIndex());
+				component.SetInput(new ComponentReference(temp), UserInterface.SavedComponentReference.getIndex());
 
 				UserInterface.CircutChanged();
 				UserInterface.CurrentState = ProgramState.None;
@@ -347,7 +340,7 @@ namespace Engine
 			if (UserInterface.GetCurrentState() == ProgramState.ReferencingFromOutput)
 			{
 				Buffer temp = collection.Buffers.New(mousePosition - collection.GetPosition());
-				Component component = collection.getComponentById(UserInterface.SavedComponentReference.getId());
+				Component component = collection.GetComponentById(UserInterface.SavedComponentReference.getId());
 				int componentIndex = UserInterface.SavedComponentReference.getIndex();
 
 				temp.AddReference(new ComponentReference(component, componentIndex));
@@ -366,7 +359,7 @@ namespace Engine
 			Blueprint collection = BlueprintLibrary.GetActiveCollection();
 
 			// logic to move any component
-			foreach (Component component in collection.getItems())
+			foreach (Component component in collection.GetComponentList())
 			{
 				if (mousePosition.isInside(new BoundingBox(component.getPosition(), component.getPosition() + component.getDimensions())))
 				{

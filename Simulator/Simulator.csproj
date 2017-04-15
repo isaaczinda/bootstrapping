@@ -79,6 +79,8 @@
     <Compile Include="Window.cs" />
     <Compile Include="StateCalculator.cs" />
     <Compile Include="Buffers.cs" />
+    <Compile Include="Analytics.cs" />
+    <Compile Include="BlueprintLibrary.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="To DO.txt" />

@@ -65,6 +65,13 @@ namespace Engine
 		// pass null if we are working with the MASTER component
 		public ComponentState[] ResolveOutputs(Dictionary<List<Component>, ComponentState[]> memoryArgument, ComponentState[] inputs, List<Component> MasterChain)
 		{
+			if (MasterChain.Count == 0)
+			{
+				Analytics.Reset();
+			}
+
+			Analytics.Record("-");
+
 			Dictionary<Component, int> targetNumberInputs = new Dictionary<Component, int>();
 			Dictionary<Component, int> actualNumberInputs = new Dictionary<Component, int>();
 
@@ -75,7 +82,9 @@ namespace Engine
 			Queue<Component> toResolveQueue = new Queue<Component>();
 			List<Component> fullyResolved = new List<Component>();
 
-			foreach (Component component in this.getItems())
+			Analytics.Record("declare variables");
+
+			foreach (Component component in this.GetComponentList())
 			{
 				// set all input states to floating
 				List<ComponentState> tempInputStates = new List<ComponentState>();
@@ -107,6 +116,8 @@ namespace Engine
 				actualNumberInputs[component] = 0;
 			}
 
+			Analytics.Record("set reference targets");
+
 			Component[] inputComponents = this.getInputComponents();
 
 			// set all of the input components' output states
@@ -118,6 +129,8 @@ namespace Engine
 				toResolveQueue.Enqueue(inputComponents[i]);
 			}
 
+			Analytics.Record("set inputs");
+
 			// repeat while there are still element outputs to propagate
 			while (toResolveQueue.Count != 0)
 			{
@@ -126,18 +139,27 @@ namespace Engine
 				// cycle over each output index
 				for (int outputIndex = 0; outputIndex < parentComponent.getNumberOutputs(); outputIndex++)
 				{
+					Analytics.Record("-");
+					var children = parentComponent.getChildren(outputIndex);
+					Analytics.Record("get children call");
+					       
 					// for a given output index, find all nodes that reference it
-					foreach (ComponentReference child in parentComponent.getChildren(outputIndex))
+					foreach (ComponentReference child in children)
 					{
-						Component childComponent = this.getComponentById(child.getId());
+						Analytics.Record("-");
+
+						Component childComponent = this.GetComponentById(child.getId());
 						// set the input of the child component to the output of the parent component
 						inputStates[childComponent][child.getIndex()] = outputStates[CopyList(MasterChain, parentComponent)][outputIndex];
 
 						actualNumberInputs[childComponent]++; //child component has one more reference now
 
+						Analytics.Record("increment input count");
+
 						// if we have set all of the references, we are forced to resolve the component
 						if (actualNumberInputs[childComponent] == targetNumberInputs[childComponent])
 						{
+							
 							// if the component is a gate, resolve it properly
 							if (childComponent.getType() == ComponentType.Gate)
 							{
@@ -145,6 +167,8 @@ namespace Engine
 
 								// pass the master chain to the 
 								ComponentState[] resolvedOutputStates = childGate.Function(inputStates[childComponent], outputStates, CopyList(MasterChain, childComponent));
+
+								Analytics.Record("-");
 								outputStates[CopyList(MasterChain, childComponent)] = resolvedOutputStates;
 
 								if (!fullyResolved.Contains(childComponent))
@@ -153,6 +177,7 @@ namespace Engine
 									toResolveQueue.Enqueue(childComponent);
 									fullyResolved.Add(childComponent);
 								}
+								Analytics.Record("enqueue complete");
 							}
 							else if (childComponent.getType() == ComponentType.Output)
 							{
@@ -167,7 +192,7 @@ namespace Engine
 								Gate childGate = (Gate)childComponent;
 								ComponentState[] resolvedOutputStates = childGate.Function(inputStates[childComponent], outputStates, CopyList(MasterChain, childComponent));
 
-
+								Analytics.Record("-");
 								// if there are no floating states in the resolved function, and if the component's children have not been resolved yet
 								if (!resolvedOutputStates.Contains(ComponentState.Float) && !fullyResolved.Contains(childComponent))
 								{                                    
@@ -176,11 +201,14 @@ namespace Engine
 									toResolveQueue.Enqueue(childComponent);
 									fullyResolved.Add(childComponent);
 								}
+								Analytics.Record("enqueue incomplete");
 							}
 						}
 					}
 				}
 			}
+
+			Analytics.Record("-");
 
 			// ALL COMPONENTS RESOLVED AT THIS POINT
 
@@ -191,42 +219,17 @@ namespace Engine
 				returnStates.Add(outputStates[CopyList(MasterChain, output)][0]);
 			}
 
-			return returnStates.ToArray();
-		}
+			Analytics.Record("setup return");
 
-		public bool IsNodeInCycle(Component node, int inputToCheck)
-		{
-			Queue<Component> toSearch = new Queue<Component>();
-			List<Component> searched = new List<Component>();
-
-			//add the first element
-			Component firstChild = this.getComponentById(node.getInputs()[inputToCheck].getId());
-			toSearch.Enqueue(firstChild);
-
-			while (toSearch.Count != 0)
+			// if we are on the top level, print
+			if (MasterChain.Count == 0)
 			{
-				// dequeue a node, note that we have searched it
-				Component currentNode = toSearch.Dequeue();
-				searched.Add(currentNode);
-
-				// get current node's children
-				List<Component> children = currentNode.getInputs().Select((input) => this.getComponentById(input.getId())).ToList();
-
-				// if we have arrived back at the master node, return true
-				if (children.Contains(node) || currentNode == node)
-				{
-					return true;
-				}
-
-				// find all children that haven't already been searched
-				List<Component> unsearchedChildren = children.Where((arg) => !searched.Contains(arg)).ToList();
-
-				// add all unsearched children to the queue
-				unsearchedChildren.ForEach((obj) => toSearch.Enqueue(obj));
+				Analytics.Print();
 			}
 
-			// if there are no more items in the queue
-			return false;
+			Console.WriteLine(this.GetName() + ": " + this.ContainsCycles().ToString());
+
+			return returnStates.ToArray();
 		}
 	}
 }

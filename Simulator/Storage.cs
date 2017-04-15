@@ -19,10 +19,19 @@ namespace Engine
 
         public static bool IsNameFree(String gateName) {
 			// if the name is reserved, it cannot be free
-			if (Component.BaseComponentNames.Contains(gateName))
+			if (Component.IsBaseComponent(gateName))
 			{
 				return false;
 			}
+
+			List<Blueprint> test = BlueprintLibrary.GetCollections();
+			List<String> test2 = new List<String>();
+
+			foreach (Blueprint print in test)
+			{
+				test2.Add(print.GetName());
+			}
+
 
 			// if any existing collection has the gate name
 			if (BlueprintLibrary.GetCollections().Select((arg) => arg.GetName()).Contains(gateName))
@@ -149,6 +158,8 @@ namespace Engine
 					// if a collection has no references left to meet
 					if (GlobalDependencies[key].Count == 0)
 					{
+						Console.WriteLine(key);
+
 						// load the collection
 						Storage.LoadComponent(key);
 
@@ -199,9 +210,8 @@ namespace Engine
 			String collectionName = (String)jObject["Name"];
 			Coord collectionPosition = ObjectToCoord(jObject["Position"]);
 
-
 			// create a component collection that we will save to
-			Blueprint collection = new Blueprint(collectionName);
+			Blueprint collection = BlueprintLibrary.NewBlueprint(collectionName);
 			collection.setPosition(collectionPosition);
 
 			// extract items and converts to List<ComponentCollection>
@@ -248,7 +258,11 @@ namespace Engine
 				collection.Buffers.New(position, id, references);
 			}
 
-			BlueprintLibrary.AddExistingCollection(collection);
+			// now that we have loaded all of the components, check for cycles
+			foreach (var component in collection.GetComponentList())
+			{
+				component.UpdateCycleStatus();
+			}
 		}
     }
 }

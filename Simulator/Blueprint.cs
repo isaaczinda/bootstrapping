@@ -6,95 +6,6 @@ using Newtonsoft.Json;
 
 namespace Engine
 {
-	public static class BlueprintLibrary
-	{
-		private static Dictionary<String, Blueprint> CollectionList = new Dictionary<String, Blueprint>();
-		private static Blueprint ActiveCollection = null;
-		public static EventManager Events = null;
-
-		public static void SetEventManager(EventManager eventManager)
-		{
-			BlueprintLibrary.Events = eventManager;
-		}
-
-		public static void AddExistingCollection(Blueprint collection)
-		{
-			if (!Storage.IsNameFree(collection.GetName()))
-			{
-				throw new Exception("collection name is already taken.");
-			}
-
-			CollectionList.Add(collection.GetName(), collection);
-		}
-
-		public static Blueprint CreateComponentCollection(String Name)
-		{
-			// throw an exception if the name is taken
-			if (!Storage.IsNameFree(Name))
-			{
-				throw new Exception("collection name is already taken.");
-			}
-
-			// create a new collection, add it to the dictionary
-			Blueprint newCollection = new Blueprint(Name);
-			CollectionList.Add(Name, newCollection);
-
-			return newCollection;
-		}
-
-		public static bool ComponentExists(String Name)
-		{
-			return CollectionList.ContainsKey(Name);
-		}
-
-		public static Blueprint Lookup(String Name)
-		{
-			if (!CollectionList.ContainsKey(Name))
-			{
-				throw new Exception("The component that you are trying to use does not exist");
-			}
-
-			return CollectionList[Name];
-		}
-
-		public static void SetActiveCollection(string ComponentName)
-		{
-			BlueprintLibrary.ActiveCollection = BlueprintLibrary.Lookup(ComponentName);
-		}
-
-		public static List<string> GetCollectionNames()
-		{
-			return new List<String>(BlueprintLibrary.CollectionList.Keys);
-		}
-
-		public static List<Blueprint> GetCollections()
-		{
-			return new List<Blueprint>(BlueprintLibrary.CollectionList.Values);
-		}
-
-		public static Blueprint GetActiveCollection()
-		{
-			if (ActiveCollection == null)
-			{
-				throw new Exception("An active collection has not yet been set");
-			}
-
-			return BlueprintLibrary.ActiveCollection;
-		}
-	}
-
-	public class Edge
-	{
-		public ComponentReference Source;
-		public ComponentReference Destination;
-
-		public Edge(ComponentReference Source, ComponentReference Destination)
-		{
-			this.Source = Source;
-			this.Destination = Destination;
-		}
-	}
-
 	// objects will not be serialized unless specified
 	[JsonObject(MemberSerialization.OptIn)]
 	public partial class Blueprint
@@ -105,8 +16,6 @@ namespace Engine
         private List<Component> Inputs = new List<Component>();
 
 		private List<String> Dependencies = new List<String>();
-
-		private List<Component> Copy = new List<Component>();
 
 		[JsonProperty]
 		public BufferCollection Buffers;
@@ -120,13 +29,38 @@ namespace Engine
 		// event that fires whenever the component collection has changed
 		public event EventHandler<EventArgs> Changed;
 
-
-		public void AddCopy(Component toAdd)
+		public Blueprint(String Name)
 		{
-			this.Copy.Add(toAdd);
+			// makes sure same name is not reused
+			if (Storage.IsNameFree(Name) == false)
+			{
+				throw new Exception("Name is already taken.");
+			}
+
+			this.Name = Name;
+			this.Position = new Coord(0, 0);
+
+			// create a new tool for managing the buffers
+			this.Buffers = new BufferCollection(this);
 		}
 
-		public List<Edge> getEdgeList()
+		/// <summary>
+		/// checks if there is a cycle in the blueprint
+		/// </summary>
+		/// <returns><c>true</c>, if a cycle exists in the blueprint, <c>false</c> otherwise.</returns>
+		public bool ContainsCycles()
+		{
+			foreach (Component component in this.GetComponentList())
+			{
+				if (component.IsInCycle())
+				{
+					return true;
+				}
+			}
+			return false;
+		}
+
+		public List<Edge> GetEdgeList()
 		{
 			List<Edge> edgeList = new List<Edge>();
 
@@ -156,7 +90,11 @@ namespace Engine
 			}
 		}
 
-		public List<Component> getItems()
+		/// <summary>
+		///  Gets a list of each component in blueprint
+		/// </summary>
+		/// <returns>The list of components.</returns>
+		public List<Component> GetComponentList()
 		{
 			return this.Items;
 		}
@@ -173,9 +111,31 @@ namespace Engine
             return this.Name;
         }
 
-		public Component getComponentById(int Id)
+		/// <summary>
+		/// get if a component with a given id exists
+		/// </summary>
+		/// <returns><c>true</c>, if exists, <c>false</c> otherwise.</returns>
+		/// <param name="Id">Identifier.</param>
+		public bool ComponentExists(int Id)
 		{
-			foreach (Component component in this.getItems())
+			foreach (Component component in this.GetComponentList())
+			{
+				if (component.getId() == Id)
+				{
+					return true;
+				}
+			}
+			return false;
+		}
+
+		/// <summary>
+		/// Gets the component by identifier.
+		/// </summary>
+		/// <returns>The component by identifier.</returns>
+		/// <param name="Id">Identifier.</param>
+		public Component GetComponentById(int Id)
+		{
+			foreach (Component component in this.GetComponentList())
 			{
 				if (component.getId() == Id)
 				{
@@ -185,19 +145,6 @@ namespace Engine
 
 			throw new Exception("no component exists with the specified Id");
 		}
-
-        public Blueprint(String Name) {
-            // makes sure same name is not reused
-            if (Storage.IsNameFree(Name) == false) {
-                throw new Exception("Name is already taken.");
-            }
-
-            this.Name = Name;
-			this.Position = new Coord(0, 0);
-
-			// create a new tool for managing the buffers
-			this.Buffers = new BufferCollection(this);
-        }
 
 		public List<string> getDependencies()
 		{
@@ -221,7 +168,7 @@ namespace Engine
 
 		private int nextAvailableId()
 		{
-			List<int> ids = (from item in this.getItems() select item.getId()).ToList();
+			List<int> ids = (from item in this.GetComponentList() select item.getId()).ToList();
 			return ids.Max() + 1;
 		}
 
@@ -270,9 +217,9 @@ namespace Engine
 		}
 
         // returns the id of the gate in question
-        public int Add(Component ToAdd) {
-			// make sure that adding this item won't add dependency 'cycles'
-			// the newly added component may NOT be defined in terms of the current collection
+        public int Add(Component ToAdd) 
+		{
+			// make sure that adding this item won't add dependency cycles
 			if (!ToAdd.IsBase())
 			{
 				if (this.IsDependencyOf(BlueprintLibrary.Lookup(ToAdd.getName())))
@@ -282,12 +229,11 @@ namespace Engine
 				}
 			}
 
+			// add the compoennt to the items list
 			this.Items.Add(ToAdd);
 
 			// add the item to the Blueprint's memory, its value will be float
 			List<ComponentState> tempStates = new List<ComponentState>();
-
-			//if (ToAdd.getType() == ComponentType.
 
 			for (int i = 0; i < ToAdd.getNumberOutputs(); i++)
 			{
@@ -303,9 +249,12 @@ namespace Engine
 			}
 
             // if the gate to add is an output or input, add to special list
-            if (ToAdd.getType() == ComponentType.Output) {
+            if (ToAdd.getType() == ComponentType.Output) 
+			{
                 this.Outputs.Add((Output)ToAdd); // cast to output
-            } else if (ToAdd.getType() == ComponentType.Input) {
+            } 
+			else if (ToAdd.getType() == ComponentType.Input) 
+			{
                 this.Inputs.Add((Input)ToAdd); // cast to input
             }
 

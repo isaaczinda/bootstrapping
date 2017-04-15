@@ -22,10 +22,12 @@ namespace Engine
 
 		protected Blueprint Parent;
 
+		private bool InCycle;
+
 		[JsonProperty]
 		protected ComponentState[] OutputStates;
 		[JsonProperty]
-		protected ComponentReference[] InputStates;
+		private ComponentReference[] InputStates;
 
 		protected List<BoundingBox> InputBoxes = new List<BoundingBox>();
 		protected List<BoundingBox> OutputBoxes = new List<BoundingBox>();
@@ -43,28 +45,39 @@ namespace Engine
 
 		public static string[] BaseComponentNames = new string[] { "input", "output", "b_and", "b_not", "clock" };
 
-		public Component()
+		//public Component()
+		//{
+		//	this.Initialize();
+		//}
+
+        public Component(Coord Position, ComponentType Type, String ComponentName) 
 		{
+			this.Position = Position;
+            this.Type = Type;
+			this.Name = ComponentName;
+            this.InCycle = false; // since it has no references, it can't be in a 
+        }
+
+		/// <summary>
+		/// adds the component to a parent blueprint
+		/// </summary>
+		/// <returns>the id that the blueprint has assigne to the component.</returns>
+		/// <param name="MemberOf">blueprint to add the component to.</param>
+		public int AddToBlueprint(Blueprint MemberOf)
+		{
+            this.Parent = MemberOf;
+			return MemberOf.Add(this);
 		}
 
 		public static bool IsBaseComponent(string componentName)
 		{
-			return Component.BaseComponentNames.Contains(componentName);
+		return Component.BaseComponentNames.Contains(componentName);
 		}
 
 		public bool IsBase()
 		{
 			return Component.BaseComponentNames.Contains(this.getName());
 		}
-
-        public Component(Blueprint MemberOf, Coord Position, ComponentType Type, String ComponentName) {
-			// add to component collection, set Id accordingly
-			this.Position = Position;
-            this.Type = Type;
-			this.Name = ComponentName;
-			this.Parent = MemberOf;
-            //this.Id = MemberOf.Add(this);
-        }
 
 		public void Move(Coord amountToMove)
 		{
@@ -96,10 +109,22 @@ namespace Engine
 			return this.Type;
 		}
 
-		protected void setupComponent(int numberInputs, int numberOutputs)
+		/// <summary>
+		/// Initialize the input and output states of a gate
+		/// </summary>
+		/// <param name="Inputs">Inputs.</param>
+		/// <param name="Outputs">Outputs.</param>
+		protected void SetupComponent(ComponentReference[] Inputs, ComponentState[] Outputs)
 		{
-			this.OutputStates = new ComponentState[numberOutputs];
-			this.InputStates = new ComponentReference[numberInputs];
+			this.InputStates = Inputs;
+			this.OutputStates = Outputs;
+			this.resetOutputs();
+		}
+
+		protected void SetupComponent(int NumberInputs, int NumberOutputs)
+		{
+			this.InputStates = new ComponentReference[NumberInputs];
+			this.OutputStates = new ComponentState[NumberOutputs];
 		}
 
         public Component(ComponentType Type) {
@@ -188,7 +213,7 @@ namespace Engine
 			List<ComponentReference> componentReferences = new List<ComponentReference>();
 
 			// find all components that reference the current component
-			foreach (Edge edge in this.Parent.getEdgeList())
+			foreach (Edge edge in this.Parent.GetEdgeList())
 			{
 				ComponentReference temp = new ComponentReference(this, index);
 				if (edge.Destination.Equals(temp))
@@ -210,7 +235,7 @@ namespace Engine
 						List<ComponentReference> referencesToBuffers = connectedBuffers.Select((arg) => new ComponentReference(arg)).ToList();
 
 						// find all components that reference ANY of the buffers in the group
-						foreach (Component component in this.Parent.getItems())
+						foreach (Component component in this.Parent.GetComponentList())
 						{
 							for (int i = 0; i < component.getNumberInputs(); i++)
 							{
@@ -236,7 +261,7 @@ namespace Engine
 
 			// search through all components in the collection and remove references to the targeted output
 			// only search the collection that this component is a member of
-			foreach (Component component in Parent.getItems())
+			foreach (Component component in Parent.GetComponentList())
 			{
 				for (int i = 0; i < component.getNumberInputs(); i++)
 				{
@@ -245,7 +270,7 @@ namespace Engine
 					{
 						if (component.getInputs()[i].Equals(new ComponentReference(this, Index)))
 						{
-							component.setInput(null, i);
+							component.SetInput(null, i);
 						}
 					}
 				}
@@ -277,15 +302,12 @@ namespace Engine
 			return this.InputStates.Length;
 		}
 
-		public void setInputs(ComponentReference[] inputs)
-		{
-			for (int i = 0; i < inputs.Length; i++)
-			{
-				this.setInput(inputs[i], i);
-			}
-		}
-
-		public void setInput(ComponentReference input, int index)
+		/// <summary>
+		/// set the input of a component at a certain index
+		/// </summary>
+		/// <param name="input">Input.</param>
+		/// <param name="index">Index.</param>
+		public void SetInput(ComponentReference input, int index)
 		{
 			if (index >= this.getNumberInputs())
 			{
@@ -293,6 +315,96 @@ namespace Engine
 			}
 
 			this.InputStates[index] = input;
+
+			// since a reference has been added, checks if node is in a cycle
+            this.UpdateCycleStatus();
+
+		}
+
+		/// <summary>
+		/// Set the component's inputs
+		/// </summary>
+		/// <param name="input">Input.</param>
+		public void SetInputs(ComponentReference[] input)
+		{
+			ComponentReference[] temp = new ComponentReference[input.Length];
+			input.CopyTo(temp, 0);
+
+			this.InputStates = temp;
+
+			// since a reference has been added, checks if node is in a cycle
+			this.UpdateCycleStatus();
+
+		}
+
+		/// <summary>
+		/// checks whether this node is in a cycle or not
+		/// </summary>
+		/// <returns><c>true</c>, if node is in cycle, <c>false</c> otherwise.</returns>
+		public bool IsInCycle()
+		{
+			return this.InCycle;
+		}
+
+		/// <summary>
+		/// Determines if a node's outputs have an impact on its inputs
+		/// </summary>
+		public void UpdateCycleStatus()
+		{
+			Queue<Component> toSearch = new Queue<Component>();
+			List<Component> searched = new List<Component>();
+
+			//enqueue every node that references the current node to the queue
+			foreach (ComponentReference reference in this.getInputs())
+			{
+				// make sure that the reference is not null
+				if (reference != null)
+				{
+					if (this.Parent.ComponentExists(reference.getId()))
+					{
+						toSearch.Enqueue(this.Parent.GetComponentById(reference.getId()));
+					}
+				}
+			}
+
+			while (toSearch.Count != 0)
+			{
+				// dequeue a node, note that we have searched it
+				Component currentNode = toSearch.Dequeue();
+				searched.Add(currentNode);
+
+				// get current node's children
+				List<Component> children = new List<Component>();
+
+				// get the component reference for each 
+				foreach (ComponentReference reference in currentNode.getInputs())
+				{
+					if (reference != null)
+					{
+						if (this.Parent.ComponentExists(reference.getId()))
+						{
+							children.Add(this.Parent.GetComponentById(reference.getId()));
+						}
+					}
+				}
+
+				// if we have arrived back at the master node, return true
+				if (children.Contains(this) || currentNode == this)
+				{
+					this.InCycle = true;
+					return;
+				}
+
+				// find all children that haven't already been searched
+				List<Component> unsearchedChildren = children.Where((arg) => !searched.Contains(arg)).ToList();
+
+				// add all unsearched children to the queue
+				unsearchedChildren.ForEach((obj) => toSearch.Enqueue(obj));
+			}
+
+			// if there are no more items in the queue
+			this.InCycle = false;
+			return;
 		}
     }
 }

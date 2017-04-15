@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Gtk;
 using Gdk;
 using System.Collections.Generic;
@@ -148,7 +148,7 @@ namespace Engine
 			}
 
 			// DRAW COMPONENTS
-			foreach (Component component in main.getItems())
+			foreach (Component component in main.GetComponentList())
 			{
 				// draw the base component
 				Drawing.drawComponent(component);
@@ -162,7 +162,7 @@ namespace Engine
 				// if the buffers reference an external component
 				if (buffer.GetGroupComponentReference() != null)
 				{
-					Component temp = main.getComponentById(buffer.GetGroupComponentReference().getId());
+					Component temp = main.GetComponentById(buffer.GetGroupComponentReference().getId());
 					// THIS MAY BE WRONG
 					bufferState = main.GetComponentOutputs(temp)[buffer.GetGroupComponentReference().getIndex()];
 				}
@@ -181,7 +181,7 @@ namespace Engine
 				if (buffer.GetComponentReference() != null)
 				{
 					ComponentReference componentReference = buffer.GetComponentReference();
-					Component component = BlueprintLibrary.GetActiveCollection().getComponentById(componentReference.getId());
+					Component component = BlueprintLibrary.GetActiveCollection().GetComponentById(componentReference.getId());
 
 					Coord target = component.getOutputBoundingBoxes()[componentReference.getIndex()].GetCenter() + component.getPosition();
 					Coord source = buffer.getBoundingBox().GetCenter();
@@ -191,7 +191,7 @@ namespace Engine
 			}
 
 			// DRAW COMPONENT REFERENCES
-			foreach (Component component in main.getItems())
+			foreach (Component component in main.GetComponentList())
 			{
 				// only check components that can hold references
 				if (component.getType() == ComponentType.Gate || component.getType() == ComponentType.Output)
@@ -216,13 +216,13 @@ namespace Engine
 								// if the group is attached to some real component
 								if (buffer.GetGroupComponentReference() != null)
 								{
-									Component temp = main.getComponentById(buffer.GetGroupComponentReference().getId());
+									Component temp = main.GetComponentById(buffer.GetGroupComponentReference().getId());
 									componentReferenceState = main.GetComponentOutputs(temp)[buffer.GetGroupComponentReference().getIndex()];
 								}
 							}
 							else
 							{
-								Component targetComponent = main.getComponentById(reference.getId());
+								Component targetComponent = main.GetComponentById(reference.getId());
 								target = targetComponent.getOutputBoundingBoxes()[reference.getIndex()].UpperLeft + targetComponent.getPosition() + new Coord(Component.REFERENCE_WIDTH / 2f, Component.REFERENCE_HEIGHT / 2f);
 
 								componentReferenceState = main.GetComponentOutputs(targetComponent)[reference.getIndex()];

@@ -6,26 +6,25 @@ namespace Engine
 	public class Input : Component
 	{
 		public Input(Blueprint MemberOf, Coord Position, Coord Dimensions, int Id, string Name, ComponentState[] OutputStates, ComponentReference[] InputStates)
+			: base(Position, ComponentType.Input, Name)
 		{
-			this.Position = Position;
 			this.Dimensions = Dimensions;
 			this.Id = Id;
-			this.Name = Name;
-			this.Type = ComponentType.Input;
-			this.OutputStates = OutputStates;
-			this.InputStates = InputStates;
-			this.Parent = MemberOf;
-			MemberOf.Add(this);
+
+			this.SetupComponent(InputStates, OutputStates);
+
 			this.calculateBoundingBoxes();
+
+			this.AddToBlueprint(MemberOf);
 		}
 
-		public Input(Blueprint MemberOf, Coord Position) : base(MemberOf, Position, ComponentType.Input, "input")
+		public Input(Blueprint MemberOf, Coord Position) : base(Position, ComponentType.Input, "input")
 		{
-			base.setupComponent(0, 1);
+			this.SetupComponent(0, 1);
 			this.setOutputs(new ComponentState[] { ComponentState.False });
 			calculateBoundingBoxes();
 
-            this.Id = MemberOf.Add(this);
+			this.Id = this.AddToBlueprint(MemberOf);
 		}
 
 		public void Toggle()

@@ -70,7 +70,7 @@ namespace Engine
 			}
 
 			// remove component references to buffers
-			foreach (Component component in this.Parent.getItems())
+			foreach (Component component in this.Parent.GetComponentList())
 			{
 				for (int index = 0; index < component.getNumberInputs(); index++)
 				{

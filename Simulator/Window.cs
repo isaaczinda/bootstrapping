@@ -57,11 +57,11 @@ public class Window : Gtk.Window
 	private void createNAndGate()
 	{
 		// create nand default gate gates
-		Blueprint nand = BlueprintLibrary.CreateComponentCollection("nand");
+		Blueprint nand = BlueprintLibrary.NewBlueprint("nand");
 		Engine.Input inputOne = new Engine.Input(nand, new Coord(0, 0));
 		Engine.Input inputTwo = new Engine.Input(nand, new Coord(0, 0));
 		And andGate = new And(nand, new Coord(0, 0));
-		andGate.setInputs(new ComponentReference[] { new ComponentReference(inputOne, 0), new ComponentReference(inputTwo, 0) });
+		andGate.SetInputs(new ComponentReference[] { new ComponentReference(inputOne, 0), new ComponentReference(inputTwo, 0) });
 
 		BufferCollection buffers = nand.Buffers;
 		Engine.Buffer bufferOne = buffers.New(new Coord(100, 100));
@@ -71,9 +71,9 @@ public class Window : Gtk.Window
 
 
 		Not notGate = new Not(nand, new Coord(0, 0));
-		notGate.setInputs(new ComponentReference[] { new ComponentReference(bufferTwo)});
+		notGate.SetInputs(new ComponentReference[] { new ComponentReference(bufferTwo)});
 
 		Output output = new Output(nand, new Coord(0, 0));
-		output.setInputs(new ComponentReference[] { new ComponentReference(notGate, 0) });
+		output.SetInputs(new ComponentReference[] { new ComponentReference(notGate, 0) });
 	}
 }

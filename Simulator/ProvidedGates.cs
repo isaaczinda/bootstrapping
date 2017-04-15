@@ -8,33 +8,34 @@ namespace Engine
 		private Blueprint Master;
 
 		public CustomGate(Blueprint MemberOf, string GateName, Coord Position)
-			: base(MemberOf, BlueprintLibrary.Lookup(GateName).getNumberInputs(), BlueprintLibrary.Lookup(GateName).getNumberOutputs(), Position, GateName)
+			: base(Position, GateName)
 		{
-			this.Initialize();
+			this.SetupComponent(BlueprintLibrary.Lookup(GateName).getNumberInputs(), BlueprintLibrary.Lookup(GateName).getNumberOutputs());
+
+			// lookup gate name, save it as field
+			this.Master = BlueprintLibrary.Lookup(this.Name);
+			this.Master.Changed += MasterChanged;
+
+			Id = this.AddToBlueprint(MemberOf);
 		}
 
 		// only used for serialization
 		public CustomGate(Blueprint MemberOf, Coord Position, Coord Dimensions, int Id, string GateName, ComponentState[] OutputStates, ComponentReference[] InputStates)
-			: base(OutputStates, InputStates)
+			: base(Position, GateName)
 		{
-			this.Position = Position;
+			this.SetupComponent(InputStates, OutputStates);
+			this.resetOutputs();
+
+            this.calculateBoundingBoxes();
+
 			this.Dimensions = Dimensions;
 			this.Id = Id;
-			this.Name = GateName;
-			this.Parent = MemberOf;
-			MemberOf.Add(this);
 
-			this.calculateBoundingBoxes();
-
-			this.Initialize();
-		}
-
-		private void Initialize()
-		{
 			// lookup gate name, save it as field
 			this.Master = BlueprintLibrary.Lookup(this.Name);
 			this.Master.Changed += MasterChanged;
-           	this.Master.AddCopy(this);
+
+			this.AddToBlueprint(MemberOf);
 		}
 
 		private void MasterChanged(object sender, EventArgs e)
@@ -47,8 +48,8 @@ namespace Engine
 
 			// clear all input and output states
 			this.OutputStates = new ComponentState[Master.getNumberInputs()];
-			this.InputStates = new ComponentReference[Master.getNumberOutputs()];
 
+			this.SetInputs(new ComponentReference[Master.getNumberOutputs()]);
 
 			// recalculate the bounding boxes
 			this.calculateBoundingBoxes();
@@ -67,7 +68,11 @@ namespace Engine
 
     public class And : Gate
     {
-		public And(Blueprint MemberOf, Coord Position) : base(MemberOf, 2, 1, Position, "b_and") {
+		public And(Blueprint MemberOf, Coord Position) : base(Position, "b_and") 
+		{
+			this.SetupComponent(2, 1);
+            calculateBoundingBoxes();
+			this.AddToBlueprint(MemberOf);
         }
 
 		public override ComponentState[] Function(ComponentState[] Inputs, Dictionary<List<Component>, ComponentState[]> Memory, List<Component> MasterChain) {
@@ -91,8 +96,12 @@ namespace Engine
 
     public class Not : Gate
     {
-		public Not(Blueprint MemberOf, Coord Position) : base(MemberOf, 1, 1, Position, "b_not") {
-        }
+		public Not(Blueprint MemberOf, Coord Position) : base(Position, "b_not") 
+		{
+			this.SetupComponent(1, 1);
+            this.calculateBoundingBoxes();
+        	this.AddToBlueprint(MemberOf);
+		}
 
 		public override ComponentState[] Function(ComponentState[] Inputs, Dictionary<List<Component>, ComponentState[]> Memory, List<Component> MasterChain) {
             if (Inputs[0] == ComponentState.True) {

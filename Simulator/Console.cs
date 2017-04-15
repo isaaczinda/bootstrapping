@@ -113,7 +113,7 @@ namespace Engine
 				switch (commands[0])
 				{
 					case "mk":
-						BlueprintLibrary.CreateComponentCollection(commands[1]);
+						BlueprintLibrary.NewBlueprint(commands[1]);
 						break;
 					case "cd":
 						changeActiveCollection(commands[1]);
